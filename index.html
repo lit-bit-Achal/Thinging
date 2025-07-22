@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMRAN FM — A Text-Only Love Radio Station</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --radio-wood: #3a2e28;
+            --radio-grill: #1c1511;
+            --dial-bg: #d4c4a3;
+            --dial-text: #4a3f35;
+            --dial-glow: #ffc857;
+            --knob-center: #c9a279;
+            --knob-shadow: #211a15;
+        }
+
+        body {
+            font-family: 'Lora', serif;
+            background-color: #1d1a1a;
+            background-image: radial-gradient(circle at center, #4d4343, #1d1a1a 70%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .radio-body {
+            width: 95%;
+            max-width: 450px;
+            height: 750px;
+            background: linear-gradient(145deg, #4e3d34, var(--radio-wood));
+            border-radius: 35px;
+            box-shadow: 
+                inset 0 0 15px rgba(0,0,0,0.6),
+                0 20px 40px rgba(0,0,0,0.5),
+                5px 5px 15px rgba(0,0,0,0.3);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            border: 4px solid #2a211c;
+        }
+
+        .radio-front-panel {
+            flex-grow: 1;
+            background: #c5b392;
+            border-radius: 20px;
+            border: 2px solid #e0d0b0;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .brand-name {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--radio-grill);
+            text-shadow: 1px 1px 1px #e0d0b0;
+        }
+        
+        .volume-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            color: var(--radio-grill);
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .volume-control:hover {
+            opacity: 1;
+        }
+
+        .display-screen {
+            background: var(--dial-bg);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: inset 2px 2px 8px rgba(0,0,0,0.5);
+            border: 2px solid #b3a282;
+            text-align: center;
+            position: relative;
+        }
+        
+        .frequency-band-container {
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to bottom, #222, #444);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #111;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .frequency-band {
+            display: flex;
+            position: absolute;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .freq-marker {
+            flex-shrink: 0;
+            color: #e0d0b0;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding: 0 10px;
+            position: relative;
+        }
+        .freq-marker::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 8px;
+            background: #e0d0b0;
+        }
+
+        .tuner-indicator {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 100%;
+            background: #f05a28;
+            box-shadow: 0 0 5px #f05a28, 0 0 10px #f05a28;
+            z-index: 2;
+        }
+
+        .text-content-area {
+            height: 180px;
+            margin-top: 15px;
+            position: relative;
+            color: var(--dial-text);
+        }
+
+        .text-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .text-content.visible {
+            opacity: 1;
+        }
+
+        #station-name { font-weight: 700; font-size: 1.25rem; }
+        #station-caption { font-style: italic; margin-top: 0.5rem; }
+        #station-message { font-size: 0.9rem; margin-top: 1rem; max-height: 100px; overflow-y: auto; padding: 0 10px; }
+
+        .tuning-knob-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        #tuning-knob {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #8c7a61, #594a3b);
+            border: 5px solid #4a3f35;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4), inset 0 3px 5px rgba(255,255,255,0.2), inset 0 -3px 5px rgba(0,0,0,0.3);
+            position: relative;
+            cursor: grab;
+            user-select: none;
+        }
+        #tuning-knob:active { cursor: grabbing; }
+
+        #tuning-knob::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #d4c4a3;
+            border-radius: 50%;
+            border: 1px solid #4a3f35;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background music element -->
+    <audio id="background-music" loop>
+        <!-- Using a royalty-free classical piece that fits the mood -->
+        <source src="https://audio.jukehost.co.uk/v9EgRHKEmmXrObnzlxosk68bbu5LGxSJ" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="radio-body">
+        <div class="radio-front-panel">
+            <!-- Volume Control -->
+            <div id="volume-control" class="volume-control" title="Toggle Music">
+                <svg id="volume-on-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                <svg id="volume-off-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="hidden"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+            </div>
+            
+            <!-- Top Section: Brand and Display -->
+            <div class="top-section">
+                <h1 class="brand-name text-4xl text-center mb-4">SIMRAN FM</h1>
+                <div class="display-screen">
+                    <div class="frequency-band-container">
+                        <div class="tuner-indicator"></div>
+                        <div id="frequency-band" class="frequency-band">
+                            <!-- Frequency markers will be generated by JS -->
+                        </div>
+                    </div>
+                    <div class="text-content-area">
+                        <div id="text-content" class="text-content">
+                            <h2 id="station-name"></h2>
+                            <p id="station-caption"></p>
+                            <p id="station-message"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section: Tuning Knob -->
+            <div class="tuning-knob-area">
+                <div id="tuning-knob"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stations = [
+                { freq: "92.0", name: "First Kiss FM", caption: "Your lips whispered things my ears could never understand.", message: "I still remember the silence before our first kiss. The way your breath paused, the way my heart raced. When our lips met, time didn’t stop it just agreed to wait. That kiss wasn’t just touch, it was trust. It said things we hadn’t found the words for. It told me I was home." },
+                { freq: "92.7", name: "Holding Hands FM", caption: "Our fingers didn’t just intertwine they made promises.", message: "When I held your hand for the first time, I wasn’t just holding skin I was holding stories, fears, dreams, and the warmest kind of hope. Our palms pressed like poems touching paper. Since then, every handshake has felt incomplete. Only your grip makes mine feel real." },
+                { freq: "93.3", name: "Eyes Closed FM", caption: "When I shut my eyes, I still see you smiling.", message: "Your smile left an imprint on my closed eyes, a soft burn that doesn’t hurt. I’ve dreamt of it. I’ve seen it when I needed strength. Even in my darkness, your joy is the light I stumble toward. You glow even when you’re not glowing for the world. You glow for me." },
+                { freq: "94.1", name: "Cheeks Like Roses FM", caption: "I blush when I think of you. You blush when I kiss you.", message: "I used to think roses were red. Then I saw your cheeks when I called you mine. That innocent flush, that giggle-tinted pink it paints every second we share in love’s purest shade. When I kiss your cheek, I’m not just touching your skin. I’m touching heaven wrapped in softness." },
+                { freq: "94.9", name: "Breathless FM", caption: "Every time you hug me, my lungs forget their job.", message: "When your arms wrap around me, the air in my chest turns to gold. Breath becomes a luxury. I don’t want to breathe I want to stay. Buried in your hug, buried in a peace I never found anywhere else. Your hugs aren’t comfort. They’re rebirth." },
+                { freq: "95.7", name: "Fight Club FM", caption: "Even in anger, you’re the only one I want near me.", message: "We’ve fought. We’ve hurt. But I’ve never once stopped loving you in the middle of it. Even when we screamed, I wanted to scream with you not away from you. Because being mad at you is better than being close to anyone else. Because love doesn’t quit during storms it learns to swim." },
+                { freq: "96.5", name: "Insecurity Station", caption: "I’m scared you’ll leave. But I’m more scared you’ll forget.", message: "Sometimes I feel not-good-enough. Not enough for your grace, your fire, your everything. I wonder if someday you’ll outgrow me. And the thought of you forgetting our little moments? That’s what breaks me. But then, I see you smile at me and suddenly, I believe in forever again." },
+                { freq: "97.3", name: "Ghosts of Past FM", caption: "You kissed my scars. Even the invisible ones.", message: "I never told you how deep some of my wounds ran. But somehow, you found them. Not with questions but with kindness. You didn’t flinch. You didn’t run. You kissed what you couldn’t even see. And in that moment, you became my safest place." },
+                { freq: "98.1", name: "Silence Says It All", caption: "Sometimes our silence says more than our words ever will.", message: "There were moments when we just sat. No words, no plans. Just quiet breathing. And yet, I felt louder in those silences than in a crowd. With you, I don’t need to talk to be heard. You understand the pauses between my thoughts. You’re fluent in my unspoken." },
+                { freq: "98.9", name: "Rainy Night FM", caption: "The storm outside wasn’t half as loud as the one inside me, missing you.", message: "On nights when it rained, and you weren’t around, I felt like the thunder was mocking me. I’d lie awake wondering if you missed me, too. The storm was wild, but not wilder than my longing for you. I wanted your voice louder than the rain." },
+                { freq: "99.5", name: "Morning Coffee FM", caption: "Waking up starts with the thought of you.", message: "My day doesn't begin with the sunrise, but with the memory of your smile. The aroma of coffee fills the kitchen, but it's the thought of sharing it with you that truly awakens my soul. Every morning is a promise of a day I get to love you." },
+                { freq: "100.1", name: "Future Dreams FM", caption: "Our future is my favorite story to write.", message: "I often find myself daydreaming about us. Not just the big moments, but the small, quiet ones. Growing old together, reading on a porch, watching our story unfold. With you, the future isn't a scary unknown; it's a masterpiece waiting to be painted." },
+                { freq: "100.7", name: "Shared Laughter FM", caption: "Your laugh is the only music I need.", message: "The sound of your laughter is a melody that can cure any sadness. It's genuine, it's infectious, and it's my favorite sound in the entire world. It reminds me that no matter what happens, we can find joy as long as we're together." },
+                { freq: "101.3", name: "Safe Harbor FM", caption: "You are the calm in my storm.", message: "Life can be a raging sea, with waves of doubt and fear. But you are my anchor, my safe harbor. In your presence, the waters calm, and I find a peace that I never thought possible. You are my sanctuary from the world." },
+                { freq: "101.9", name: "Little Things FM", caption: "It's the little things you do that mean the most.", message: "It’s not about grand gestures. It's the way you look at me when you think I'm not watching. The way you remember a tiny detail I told you weeks ago. These small acts of love are the threads that weave the beautiful tapestry of us." },
+                { freq: "102.5", name: "Unspoken Vows FM", caption: "Every look we share is a promise.", message: "We don't always need words. A simple glance across a crowded room can say 'I love you,' 'I'm here for you,' 'You're my everything.' Our eyes speak a language of their own, a language of deep connection and unspoken vows." },
+                { freq: "103.1", name: "Starlight FM", caption: "Under the stars, I found my universe in you.", message: "I used to look at the night sky and feel small. But now when I look at the stars, I think of you. Each one is a reason I love you. You are more vast and beautiful than any galaxy, and I am endlessly exploring your light." },
+                { freq: "103.7", name: "Your Strength FM", caption: "You make me braver than I ever thought I could be.", message: "Your belief in me is a force that makes me want to be a better person. When I doubt myself, you are the voice that tells me I can. Your strength doesn't just support you; it lifts me up and makes me feel invincible." },
+                { freq: "104.3", name: "Simple Moments FM", caption: "A simple walk with you is an adventure.", message: "I don't need fancy dates or exotic trips. A simple walk in the park, holding your hand, talking about nothing and everything, is more precious to me than any treasure. These ordinary moments become extraordinary because I'm with you." },
+                { freq: "104.9", name: "Forever & Always FM", caption: "My love for you doesn't have an expiration date.", message: "People talk about forever as if it's a destination. But with you, forever is the journey. It's every sunrise we'll share and every challenge we'll face. My love for you isn't just for now; it's for always, in every version of us." }
+            ];
+
+            const knob = document.getElementById('tuning-knob');
+            const frequencyBand = document.getElementById('frequency-band');
+            const bandContainer = document.querySelector('.frequency-band-container');
+            const textContent = document.getElementById('text-content');
+            const stationNameEl = document.getElementById('station-name');
+            const stationCaptionEl = document.getElementById('station-caption');
+            const stationMessageEl = document.getElementById('station-message');
+            const backgroundMusic = document.getElementById('background-music');
+            const volumeControl = document.getElementById('volume-control');
+            const volOnIcon = document.getElementById('volume-on-icon');
+            const volOffIcon = document.getElementById('volume-off-icon');
+
+            let isDragging = false;
+            let currentAngle = 0;
+            let startAngle = 0;
+            let currentStationIndex = 0;
+            let isAudioInitialized = false;
+            
+            // --- Audio Setup ---
+            let staticNoise, clickSound;
+            const setupAudio = async () => {
+                if(isAudioInitialized) return;
+                isAudioInitialized = true;
+
+                await Tone.start();
+                
+                staticNoise = new Tone.Noise("pink").toDestination();
+                staticNoise.volume.value = -40; // Very quiet
+                
+                clickSound = new Tone.MembraneSynth({
+                    pitchDecay: 0.01,
+                    octaves: 2,
+                    envelope: { attack: 0.001, decay: 0.2, sustain: 0 }
+                }).toDestination();
+                clickSound.volume.value = -10;
+
+                // Play background music
+                backgroundMusic.play().catch(e => console.error("Music play failed:", e));
+                
+                console.log("Audio ready.");
+            };
+
+            // --- UI Generation ---
+            const markerWidth = 60; // Width of each frequency marker in pixels
+            function generateFrequencyBand() {
+                stations.forEach(station => {
+                    const marker = document.createElement('div');
+                    marker.className = 'freq-marker';
+                    marker.style.width = `${markerWidth}px`;
+                    marker.textContent = station.freq;
+                    frequencyBand.appendChild(marker);
+                });
+            }
+
+            // --- UI Update ---
+            function updateDisplay(newIndex) {
+                if (newIndex === currentStationIndex) return;
+                currentStationIndex = newIndex;
+
+                const station = stations[currentStationIndex];
+                
+                textContent.classList.remove('visible');
+                
+                if(clickSound) clickSound.triggerAttackRelease("C1", "8n");
+
+                setTimeout(() => {
+                    stationNameEl.textContent = station.name;
+                    stationCaptionEl.textContent = `“${station.caption}”`;
+                    stationMessageEl.textContent = station.message;
+                    textContent.classList.add('visible');
+                }, 300);
+
+                // Slide the frequency band
+                const containerWidth = bandContainer.offsetWidth;
+                const offset = (containerWidth / 2) - (markerWidth / 2);
+                const newPosition = -currentStationIndex * markerWidth + offset;
+                frequencyBand.style.transform = `translateX(${newPosition}px)`;
+            }
+
+            // --- Knob Interaction Logic ---
+            function getAngle(event) {
+                const rect = knob.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const clientX = event.clientX || event.touches[0].clientX;
+                const clientY = event.clientY || event.touches[0].clientY;
+                return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+            }
+
+            function handleMouseDown(e) {
+                e.preventDefault();
+                setupAudio(); // Ensure audio is ready on first interaction
+                isDragging = true;
+                startAngle = getAngle(e) - currentAngle;
+                knob.style.transition = 'none';
+                if(staticNoise) staticNoise.start();
+            }
+
+            function handleMouseUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                knob.style.transition = 'transform 0.3s ease';
+                if(staticNoise) staticNoise.stop();
+            }
+
+            function handleMouseMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                
+                let angle = getAngle(e) - startAngle;
+                currentAngle = angle;
+                knob.style.transform = `rotate(${currentAngle}deg)`;
+
+                // Map angle to station index
+                const totalRotation = 360 * 2; // Allow 2 full rotations
+                const rotationPercentage = (currentAngle % totalRotation + totalRotation) % totalRotation / totalRotation;
+                let newIndex = Math.round(rotationPercentage * (stations.length -1));
+                
+                updateDisplay(newIndex);
+            }
+
+            // --- Event Listeners ---
+            knob.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('mousemove', handleMouseMove);
+            knob.addEventListener('touchstart', handleMouseDown, { passive: false });
+            document.addEventListener('touchend', handleMouseUp);
+            document.addEventListener('touchmove', handleMouseMove, { passive: false });
+
+            volumeControl.addEventListener('click', () => {
+                backgroundMusic.muted = !backgroundMusic.muted;
+                volOnIcon.classList.toggle('hidden', backgroundMusic.muted);
+                volOffIcon.classList.toggle('hidden', !backgroundMusic.muted);
+            });
+
+            // --- Initialisation ---
+            generateFrequencyBand();
+            updateDisplay(0); // Set initial station without transition
+            textContent.classList.add('visible'); // Make initial text visible
+        });
+    </script>
+</body>
+</html>
